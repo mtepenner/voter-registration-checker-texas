@@ -1,0 +1,31 @@
+# Environment variables (protect PII)
+.env
+.env.*
+!.env.example
+
+# Generated runtime logs and screenshots
+artifacts/
+*.log
+*.png
+
+# Playwright traces and test outputs
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Python byte-compiled / cache / virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+env/
+ENV/
+.pytest_cache/
+
+# IDEs and OS metadata
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
