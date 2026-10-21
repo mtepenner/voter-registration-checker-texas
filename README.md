@@ -1,13 +1,14 @@
-# Texas Voter Registration Lookup Automation
+# Texas Voter Registration Lookup Automation (Playwright + pytest-bdd)
 
-A self-bootstrapping Python automation script built with **Playwright** that navigates to [VoteTexas.gov](https://www.votetexas.gov/register-to-vote/index.html), transitions to the official Texas Secretary of State **Am I Registered?** lookup portal, and populates your voter lookup fields automatically from a local `.env` file.
+A self-bootstrapping Behavior-Driven Development (**BDD**) automation suite built with **Python**, **Playwright**, and **pytest-bdd**. It navigates to [VoteTexas.gov](https://www.votetexas.gov/register-to-vote/index.html), follows the official Texas Secretary of State **Am I Registered?** portal link, and populates your voter lookup fields using credentials stored in a local `.env` file.
 
 ## Features
 
-* **Zero-Config Bootstrapping:** Automatically detects and installs missing Python dependencies (`playwright`, `python-dotenv`) and the Playwright Chromium binary on first run.
-* **Environment-Driven Privacy:** Loads `FIRST_NAME`, `LAST_NAME`, `ZIP_CODE`, and `COUNTY` (automatically normalized to `ALL CAPS`) from a local `.env` file excluded from Git.
-* **Milestone & Failure Screenshots:** Captures timestamped, full-page PNG screenshots at each navigation step and automatically snapshots the DOM state if a timeout or unexpected exception occurs.
-* **Dual-Target Logging:** Streams concise `INFO` status updates to the console while writing detailed `DEBUG` events and stack traces to `artifacts/logs/voter_check.log`.
+* **Zero-Config Bootstrapping:** Running `python run_tests.py` automatically detects and installs missing Python packages (`pytest`, `pytest-bdd`, `playwright`, `python-dotenv`) and the Playwright Chromium browser binary.
+* **BDD Gherkin Architecture:** Separates human-readable behavior specifications (`features/voter_registration.feature`) from Playwright step definitions (`tests/test_voter_registration.py`) and session fixtures (`tests/conftest.py`).
+* **Environment-Driven Privacy:** Loads `FIRST_NAME`, `LAST_NAME`, `ZIP_CODE`, and `COUNTY` (automatically normalized and asserted as `ALL CAPS`) from a git-ignored `.env` file.
+* **Automated Step & Error Screenshots:** Uses `pytest_bdd_after_step` and `pytest_bdd_step_error` hooks to capture full-page, timestamped PNG screenshots after every Gherkin step and immediately upon any step failure.
+* **Dual-Target Pytest Logging:** Configured via `pytest.ini` to stream concise `INFO` updates to the terminal while recording detailed `DEBUG` events and stack traces to `artifacts/logs/voter_check.log`.
 
 ## Prerequisites
 
@@ -21,49 +22,53 @@ Copy the example environment template to a local `.env` file:
 
 ```bash
 cp .env.example .env
-
 ```
 
-Open `.env` and enter your lookup information (ensure `COUNTY` is in all caps):
+Open `.env` and fill in your voter lookup details (`COUNTY` should be in all caps):
 
 ```ini
 FIRST_NAME=JANE
 LAST_NAME=DOE
 ZIP_CODE=78701
 COUNTY=TRAVIS
-
 ```
 
-### 2. Run the Script
+### 2. Run the BDD Test Suite
 
-Execute the script directly—it will install `playwright`, `python-dotenv`, and the Chromium browser binary automatically if they are not already present:
+Run the self-bootstrapping test runner—it installs any missing dependencies and launches the `pytest-bdd` suite in interactive mode:
 
 ```bash
-python check_registration.py
-
+python run_tests.py
 ```
+
+*(Once dependencies are installed, you can also run `pytest -s` directly, or run `INTERACTIVE_PAUSE=false python run_tests.py` to skip the terminal pause at the end of the scenario.)*
 
 ### 3. Review & Submit
 
-1. The script launches a visible Chromium window, navigates through VoteTexas.gov to the Texas Secretary of State lookup portal, and fills in your configured details.
+1. The suite launches a visible Chromium window, navigates through VoteTexas.gov to the official Texas Secretary of State lookup portal, and populates your `.env` details.
 2. Complete any remaining required verification fields (such as Date of Birth) in the open browser window and submit the form.
-3. Return to your terminal and press **Enter** to capture a final review screenshot and close the browser session cleanly.
+3. Return to your terminal and press **Enter** to capture the final review screenshot and close the browser session cleanly.
 
 ## Project Structure & Artifacts
 
 ```text
 .
-├── .env.example             # Template for required environment variables
-├── .gitignore               # Excludes .env and artifacts/ from version control
-├── README.md                # Project documentation
-├── check_registration.py    # Main self-bootstrapping Playwright script
-└── artifacts/               # Auto-generated at runtime (git-ignored)
+├── .env.example                        # Template for required environment variables
+├── .gitignore                          # Excludes .env, caches, and artifacts/ from Git
+├── README.md                           # Project documentation
+├── pytest.ini                          # Pytest & dual-target logging configuration
+├── run_tests.py                        # Self-bootstrapping test runner
+├── features/
+│   └── voter_registration.feature      # Gherkin BDD feature and scenario specification
+├── tests/
+│   ├── conftest.py                     # Playwright fixtures, .env loader, and BDD hooks
+│   └── test_voter_registration.py      # Step definitions for voter lookup workflow
+└── artifacts/                          # Auto-generated at runtime (git-ignored)
     ├── logs/
-    │   └── voter_check.log
-    └── screenshots/
-        ├── YYYYMMDD_HHMMSS_01_votetexas_landing.png
-        ├── YYYYMMDD_HHMMSS_02_voter_portal_loaded.png
-        ├── YYYYMMDD_HHMMSS_03_form_populated.png
-        └── YYYYMMDD_HHMMSS_04_final_review.png
-
+    │   └── voter_check.log             # Detailed DEBUG execution and error log
+    └── screenshots/                    # Timestamped step, review, and error PNGs
+        ├── YYYYMMDD_HHMMSS_01_given_valid_voter_details_are_loaded.png
+        ├── YYYYMMDD_HHMMSS_02_given_the_browser_is_on_the_votetexas.png
+        ├── YYYYMMDD_HHMMSS_03_when_the_user_follows_the_am_i_registered.png
+        └── YYYYMMDD_HHMMSS_98_final_review_state.png
 ```
